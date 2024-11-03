@@ -130,17 +130,18 @@ SELECT c.customer_id, c.first_name AS nombre, c.last_name AS apellido, COUNT(f.f
 /*
 	11. Encuentra la cantidad total de películas alquiladas por categoría y muestra el nombre de la categoría junto con el recuento de alquileres.
 */     
--- A modo de comprobacion se hizo un conteo individual de las peliculas de categoria R y PG3 usando Having y el numero coincidia con el obtenido en la query principal   
+-- Categoria en la tabla film_category -> se comprueba que esta tabla tiene todas las peliculas categorizadas
 
-SELECT rating AS categoria, COUNT(film_id) AS total_peliculas_alquiladas
-	FROM rental 
-	INNER JOIN inventory 
+SELECT c.name AS categoria, COUNT(f_c.film_id) AS recuento_alquileres
+	FROM rental AS r
+	INNER JOIN inventory AS i
 		USING (inventory_id)
-	INNER JOIN film AS f
+	INNER JOIN film_category AS f_c -- Hago el INNER JOIN con film_category que contiene todas las peliculas categorizadas (category_id)
 		USING (film_id)
-	 GROUP BY rating;
-
-
+    INNER JOIN category AS c
+		USING (category_id)
+	 GROUP BY c.category_id;
+     
 /*
 	12. Encuentra el promedio de duración de las películas para cada clasificación de la tabla film y muestra la clasificación junto con el promedio de duración.
 */    
@@ -203,17 +204,75 @@ SELECT a.first_name AS nombre, a.last_name AS apellido, a.actor_id
 	WHERE f_a.actor_id IS NULL;
 
 
+/*
+	16. Encuentra el título de todas las películas que fueron lanzadas entre el año 2005 y 2010.
+*/ 
+
+SELECT title AS titulo
+	FROM film
+    WHERE release_year BETWEEN 2005 AND 2010;
+
+
+/*
+	17. Encuentra el título de todas las películas que son de la misma categoría que "Family".
+*/ 
+
+SELECT f.title AS titulo
+	FROM film AS f
+	INNER JOIN film_category AS f_c 
+		USING (film_id)
+    INNER JOIN category AS c
+		USING (category_id)
+	WHERE c.name = "Family";
+
+
+/*
+	18. Muestra el nombre y apellido de los actores que aparecen en más de 10 películas.
+*/ 
+-- Se elimina COUNT(f_a.film_id) del SELECT tras la comprobacion
+
+SELECT a.first_name AS nombre, a.last_name AS apellido
+	FROM actor AS a
+    INNER JOIN film_actor AS f_a
+		USING (actor_id)
+	GROUP BY a.actor_id
+	HAVING COUNT(f_a.film_id) > 10;
+
+
+/*
+	19. Encuentra el título de todas las películas que son "R" y tienen una duración mayor a 2 horas en la tabla film.
+*/ 
+-- Asumimos que length es la duracion de la pelicula en minutos, por lo tanto length debe ser mayor que 120 
+
+SELECT title AS titulo, length, rating
+	FROM film
+    WHERE length > 120 AND rating = "R";
+	
+    
+/*
+	20. Encuentra las categorías de películas que tienen un promedio de duración superior a 120 minutos y muestra el nombre de la categoría junto con el promedio de duración.
+*/ 
+
+SELECT c.name AS categoria, ROUND(AVG(f.length),2) AS promedio_duracion
+	FROM film AS f
+	INNER JOIN film_category AS f_c 
+		USING (film_id)
+    INNER JOIN category AS c
+		USING (category_id)
+	WHERE length > 120 -- Aplicamos el filtro antes de la agrupacion para trabajar solo con los valores que cumplen con los requisitos
+    GROUP BY c.category_id;
+
+
 
 
 
 
 -- BORRAR    
-SELECT count(actor_id)
-	FROM film_actor
-    GROUP BY actor_id;
-    
-    LIMIT 8;
 
+SELECT *
+	FROM film
+    LIMIT 8;    
+    
 SELECT *
 	FROM actor
     LIMIT 8;
@@ -221,6 +280,18 @@ SELECT *
 SELECT *
 	FROM film_actor
     LIMIT 8;
+    
+ SELECT *
+	FROM category
+    LIMIT 8;   
+    
+SELECT *
+	FROM rental
+    LIMIT 8;
+    
+
+    
+
 
 -- ----------------------------------------BONUS--------------------------------------
 /*
