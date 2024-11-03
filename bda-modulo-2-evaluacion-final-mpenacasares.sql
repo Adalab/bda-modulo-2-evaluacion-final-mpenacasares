@@ -164,6 +164,7 @@ SELECT a.first_name AS nombre, a.last_name AS apellido
 		USING (actor_id)
 	WHERE f.title = "Indian Love";
     
+    
  /*
 	14. Muestra el título de todas las películas que contengan la palabra "dog" o "cat" en su descripción.
 */     
@@ -200,7 +201,7 @@ SELECT a.first_name AS nombre, a.last_name AS apellido
 SELECT a.first_name AS nombre, a.last_name AS apellido, a.actor_id
 	FROM actor AS a
 	LEFT JOIN film_actor AS f_a 
-    ON a.actor_id = f_a.actor_id
+    USING (actor_id)
 	WHERE f_a.actor_id IS NULL;
 
 
@@ -263,14 +264,81 @@ SELECT c.name AS categoria, ROUND(AVG(f.length),2) AS promedio_duracion
     GROUP BY c.category_id;
 
 
+/*
+	21. Encuentra los actores que han actuado en al menos 5 películas y muestra el nombre del actor junto con la cantidad de películas en las que han actuado.
+*/ 
+
+SELECT a.first_name AS nombre, a.last_name AS apellido, COUNT(f_a.film_id) AS cantidad_peliculas
+	FROM actor AS a
+	INNER JOIN film_actor AS f_a 
+		USING (actor_id)
+    GROUP BY a.actor_id
+	HAVING COUNT(f_a.film_id) >= 5;
 
 
+/*
+	22. Encuentra el título de todas las películas que fueron alquiladas por más de 5 días. Utiliza una subconsulta para encontrar los rental_ids con 
+		una duración superior a 5 días y luego selecciona las películas correspondientes.
+*/ 
+-- Se eliminan r.rental_id, DATEDIFF(r.return_date, r.rental_date) del SELECT tras la comprobacion
+-- Utilizamos DISTINCT(f.title) porque la misma pelicula ha podido ser alquilada varias veces durante mas de 5 dias, asi evitamos duplicados
+
+SELECT DISTINCT(f.title) AS titulo
+	FROM rental AS r
+	INNER JOIN inventory AS i
+		USING (inventory_id)
+	INNER JOIN film AS f 
+		USING (film_id)
+    WHERE r.rental_id IN (SELECT rental_id
+							FROM rental
+							WHERE DATEDIFF(return_date, rental_date) > 5); 
+	
+ -- Mismo ejercicio resuelto con una CTE   
+ 
+ WITH rental_length AS (SELECT r.rental_id
+							FROM rental AS r
+							WHERE DATEDIFF(return_date, rental_date) > 5)
+    
+ SELECT DISTINCT(f.title) AS titulo
+	FROM rental AS r
+	INNER JOIN inventory AS i
+		USING (inventory_id)
+	INNER JOIN film AS f 
+		USING (film_id)
+    WHERE r.rental_id IN (SELECT rental_id
+							FROM rental_length);
 
 
+/*
+	23. Encuentra el nombre y apellido de los actores que no han actuado en ninguna película de la categoría "Horror". Utiliza una subconsulta para encontrar los actores 
+		que han actuado en películas de la categoría "Horror" y luego exclúyelos de la lista de actores.
+*/ 
+-- Genero una tabla temporal con una CTE donde obtengo los actor_id que no han actuado en ninguna pelicula de Horror -> la utilizare en la subconsulta
+
+WITH actor_film_horror AS (SELECT DISTINCT(a.actor_id)
+								FROM actor AS a
+								INNER JOIN film_actor AS f_a 
+									USING (actor_id)
+								INNER JOIN film_category AS f_c 
+									USING (film_id)    
+								INNER JOIN category AS c
+									USING (category_id)
+								WHERE c.name = "Horror")
+
+SELECT a.first_name AS nombre, a.last_name AS apellido
+	FROM actor AS a
+	WHERE a.actor_id NOT IN (SELECT actor_id
+								FROM actor_film_horror)
+	ORDER BY a.first_name;
+	
 -- BORRAR    
 
 SELECT *
 	FROM film
+    LIMIT 8;    
+    
+SELECT *
+	FROM rental
     LIMIT 8;    
     
 SELECT *
@@ -279,6 +347,10 @@ SELECT *
     
 SELECT *
 	FROM film_actor
+    LIMIT 8;
+    
+SELECT *
+	FROM film_category
     LIMIT 8;
     
  SELECT *
