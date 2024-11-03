@@ -112,9 +112,9 @@ SELECT rating AS clasificacion, COUNT(rating) AS conteo_clasificacion
 /*
 	10. Encuentra la cantidad total de películas alquiladas por cada cliente y muestra el ID del cliente, su nombre y apellido junto con la cantidad de películas alquiladas.
 */     
--- INNER JOIN que me permitan tener una tabla con todos los campos que necesito mostrar
--- Como tenemos una tabla con los datos de los film_id que ha alquilado cada cliente, agrupamos por customer_id (va en funcion de nombre y apellido) y aplicamos COUNT a film_id para tener el conteo de peliculas 
--- alquiladas por cliente
+-- INNER JOIN que me permita tener una tabla con todos los campos que necesito mostrar
+-- Como tenemos una tabla con los datos de los film_id que ha alquilado cada cliente, agrupamos por customer_id (va en funcion de nombre y apellido) y aplicamos COUNT a film_id 
+-- para tener el conteo de peliculas alquiladas por cliente
 
 SELECT c.customer_id, c.first_name AS nombre, c.last_name AS apellido, COUNT(f.film_id) AS peliculas_alquiladas
 	FROM customer as c
@@ -127,17 +127,99 @@ SELECT c.customer_id, c.first_name AS nombre, c.last_name AS apellido, COUNT(f.f
     GROUP BY customer_id;
     
     
--- BORRAR    
-SELECT *
+/*
+	11. Encuentra la cantidad total de películas alquiladas por categoría y muestra el nombre de la categoría junto con el recuento de alquileres.
+*/     
+-- A modo de comprobacion se hizo un conteo individual de las peliculas de categoria R y PG3 usando Having y el numero coincidia con el obtenido en la query principal   
+
+SELECT rating AS categoria, COUNT(film_id) AS total_peliculas_alquiladas
+	FROM rental 
+	INNER JOIN inventory 
+		USING (inventory_id)
+	INNER JOIN film AS f
+		USING (film_id)
+	 GROUP BY rating;
+
+
+/*
+	12. Encuentra el promedio de duración de las películas para cada clasificación de la tabla film y muestra la clasificación junto con el promedio de duración.
+*/    
+
+SELECT rating AS clasificacion, ROUND(AVG(length),2) AS promedio_duracion
 	FROM film
+    GROUP BY rating;
+    
+
+/*
+	13. Encuentra el nombre y apellido de los actores que aparecen en la película con title "Indian Love".
+*/     
+-- Se elimina el campo title del SELECT tras comprobacion
+
+SELECT a.first_name AS nombre, a.last_name AS apellido
+	FROM film AS f
+    INNER JOIN film_actor AS f_a
+		USING (film_id) 
+	INNER JOIN actor AS a
+		USING (actor_id)
+	WHERE f.title = "Indian Love";
+    
+ /*
+	14. Muestra el título de todas las películas que contengan la palabra "dog" o "cat" en su descripción.
+*/     
+    -- Se elimina el campo description del SELECT tras comprobacion
+    
+ SELECT title AS titulo
+	FROM film
+    WHERE description LIKE "%dog%" OR description LIKE "%cat%";
+    
+    -- Al hacer las consultas por separado se comprueba hay un total de 99 peliculas que contienen dog en la description y 70 que contienen cat
+    -- Al hacer la consulta buscando dog o cat en la description se han obtenido 167 resultados. Esto es debido a que se hace la busqueda eliminando aquellas description que contienen ambos valores.
+    -- Se comprueba que nos da un resultado de 2 peliculas que tienen cat y dog en la description y que por tanto no se incluyen en el resultado de la query principal
+    
+	  /*   
+		SELECT title,  description
+			FROM film
+			WHERE description LIKE '%dog%' AND description LIKE '%cat%';
+	*/ 
+    
+    
+/*
+	15. Hay algún actor o actriz que no apareca en ninguna película en la tabla film_actor.
+*/ 
+-- Obtener actor_id que no este en la tabla film_actor
+-- Seleccionamos aquellos actores de la tabla actor_id que NO aparecen en la subconsulta que nos indica los actor_id que SI aparecen en film_actor y por tanto, parecen en alguna película 
+-- No hay ningun actor que no este asignado a, por lo menos, una pelicula
+SELECT a.first_name AS nombre, a.last_name AS apellido
+	FROM actor AS a
+	WHERE a.actor_id NOT IN (SELECT f_a.actor_id
+								FROM film_actor AS f_a);
+
+-- Otra forma de obtener el resultado seria usando un LEFT JOIN que nos mantiene todos los resultados de la tabla actores combinandolo con la tabla film_actor
+-- y usando el WHERE para que muestre el nombre y apellido de aquellos actores que obtuvieron un valor de actor_id null es la tabla film_actor
+SELECT a.first_name AS nombre, a.last_name AS apellido, a.actor_id
+	FROM actor AS a
+	LEFT JOIN film_actor AS f_a 
+    ON a.actor_id = f_a.actor_id
+	WHERE f_a.actor_id IS NULL;
+
+
+
+
+
+
+-- BORRAR    
+SELECT count(actor_id)
+	FROM film_actor
+    GROUP BY actor_id;
+    
     LIMIT 8;
 
 SELECT *
-	FROM inventory
+	FROM actor
     LIMIT 8;
     
 SELECT *
-	FROM rental
+	FROM film_actor
     LIMIT 8;
 
 -- ----------------------------------------BONUS--------------------------------------
