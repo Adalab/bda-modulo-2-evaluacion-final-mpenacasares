@@ -299,7 +299,7 @@ SELECT DISTINCT(f.title) AS titulo
 							FROM rental AS r
 							WHERE DATEDIFF(return_date, rental_date) > 5)
     
- SELECT DISTINCT(f.title) AS titulo
+ SELECT DISTINCT(f.title) AS titulo -- Habria sido mejor hacer la CTE con los INNER JOIN
 	FROM rental AS r
 	INNER JOIN inventory AS i
 		USING (inventory_id)
@@ -368,4 +368,18 @@ SELECT a1.first_name AS actor1_nombre, a1.last_name AS actor1_apellido, a2.first
 		HAVING peliculas_juntos >= 1 -- peliculas_juntos es el conteo de peliculas en las que cada par de actores han estado juntos, ya que filtra resultados del GROUP BY. Filtramos con >= 1
 	ORDER BY peliculas_juntos DESC;
 
-
+-- Resuelto con CTE - Ejemplo facilitado por Cesar --> esto NO lo subi yo en la evaluacion
+WITH ActoresRelacionados AS (
+  SELECT a1.actor_id AS actor_id1, a2.actor_id AS actor_id2, COUNT(*) AS cantidad_actuaciones
+  FROM film_actor a1
+  JOIN film_actor a2 ON a1.film_id = a2.film_id AND a1.actor_id < a2.actor_id
+  GROUP BY a1.actor_id, a2.actor_id
+  HAVING COUNT(*) >= 1
+)
+SELECT actor1.first_name AS actor1_nombre, actor1.last_name AS actor1_apellido,
+       actor2.first_name AS actor2_nombre, actor2.last_name AS actor2_apellido,
+       cantidad_actuaciones
+FROM ActoresRelacionados
+JOIN actor AS actor1 ON actor1.actor_id = actor_id1
+JOIN actor AS actor2 ON actor2.actor_id = actor_id2
+ORDER BY cantidad_actuaciones DESC;
