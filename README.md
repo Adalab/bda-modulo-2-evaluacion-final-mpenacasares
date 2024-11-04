@@ -30,6 +30,6 @@ Cada pregunta está diseñada para evaluar diferentes aspectos de SQL, tales com
 
 > **Nota:** La base de datos Sakila debe estar instalada en tu entorno de MySQL para ejecutar correctamente las consultas.
 
-## Contacto
+## Contacto ✨
 
 Para cualquier consulta, puedes ponerte en contacto conmigo a través de GitHub.
