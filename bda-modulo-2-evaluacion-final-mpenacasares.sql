@@ -331,43 +331,41 @@ SELECT a.first_name AS nombre, a.last_name AS apellido
 								FROM actor_film_horror)
 	ORDER BY a.first_name;
 	
--- BORRAR    
 
-SELECT *
-	FROM film
-    LIMIT 8;    
-    
-SELECT *
-	FROM rental
-    LIMIT 8;    
-    
-SELECT *
-	FROM actor
-    LIMIT 8;
-    
-SELECT *
-	FROM film_actor
-    LIMIT 8;
-    
-SELECT *
-	FROM film_category
-    LIMIT 8;
-    
- SELECT *
-	FROM category
-    LIMIT 8;   
-    
-SELECT *
-	FROM rental
-    LIMIT 8;
-    
-
-    
 
 
 -- ----------------------------------------BONUS--------------------------------------
 /*
-	
+	24. Encuentra el título de las películas que son comedias y tienen una duración mayor a 180 minutos en la tabla film.
 */
 
-        
+SELECT title AS titulo
+	FROM film AS f
+	INNER JOIN film_category AS f_c 
+		USING (film_id)
+    INNER JOIN category AS c
+		USING (category_id)
+	WHERE f.length > 180 AND c.name = "Comedy";
+
+
+/*
+	25. Encuentra todos los actores que han actuado juntos en al menos una película. La consulta debe mostrar el nombre y apellido de los actores y el número de películas en las que han actuado juntos.
+*/
+-- En la tabla film_actor hay que localizar los pares de actores (actor_id) que comparten film_id -> SELF JOIN -> INNER JOIN de la tabla film_actor consigo misma
+-- Para conseguir el nombre y apellido -> INNER JOIN de cada tabla film_actor con la tabla actor 
+-- Para SELF JOIN necesito asignar alias
+
+SELECT a1.first_name AS actor1_nombre, a1.last_name AS actor1_apellido, a2.first_name AS actor2_nombre, a2.last_name AS actor2_apellido, COUNT(*) AS peliculas_juntos
+	FROM film_actor AS f_a1
+	INNER JOIN film_actor AS f_a2
+		USING (film_id) -- USING porque film_id solo esta en la tabla film_actor -> Con este INNER JOIN estoy haciendo la union consigo misma para encontrar todos los pares de actores que comparten una película 
+	INNER JOIN actor AS a1 
+		ON f_a1.actor_id = a1.actor_id -- Utilizo ON porque necesito especificar con los alias la procedencia de la columna actor_id sobre la que quiero aplicar el INNER JOIN (actor_id) es comun a todas las tablas
+	INNER JOIN actor AS a2 
+		ON f_a2.actor_id = a2.actor_id
+	WHERE f_a1.actor_id < f_a2.actor_id -- IMPORTANTE porque si indicas f_a1.actor_id <> f_a2.actor_id se generan duplicados al incluirse los pares de actores de distinto orden
+	GROUP BY a1.actor_id, a2.actor_id -- Agrupacion de resultados por pares de actores
+		HAVING peliculas_juntos >= 1 -- peliculas_juntos es el conteo de peliculas en las que cada par de actores han estado juntos, ya que filtra resultados del GROUP BY. Filtramos con >= 1
+	ORDER BY peliculas_juntos DESC;
+
+
